@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import url from 'node:url';
 import { DateTime } from 'luxon';
+import { log } from 'node:console';
 
 
 const port = 3000;
@@ -10,7 +11,7 @@ const app = express();
 const __fileName = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__fileName)
 const fileName = path.join(__dirname, 'db/buses.json');
-const timeZone = "UTC+3";
+const timeZone = "UTC";
 
 
 
@@ -62,34 +63,41 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
 // sendUpdateData
 const sendUpdateTime = async () => {
     const buses = await loadBuss();
-    const updateBuses = buses.map(bus => {
-        const nextTimeDeparture = calcNextTime(bus.firstDepartureTime,bus.frequencyMinutes);        
-        return {
-            ...bus,
-            nextDeparture: {
-                data: nextTimeDeparture.toFormat('dd.MM.yyyy'),
-                time: nextTimeDeparture.toFormat('HH:mm:ss'),
-            }
-        };
-    });
+    const updateBuses = buses
+        .map(bus => {
+            const nextTimeDeparture = calcNextTime(bus.firstDepartureTime,bus.frequencyMinutes);        
+            return {
+                ...bus,
+                nextDeparture: {
+                    date: nextTimeDeparture.toFormat('dd.MM.yyyy'),
+                    time: nextTimeDeparture.toFormat('HH:mm:ss'),
+                }
+            };
+        })
+        .sort((val1, val2) => {
+            const d1 = DateTime
+                    .fromFormat(`${val1.nextDeparture.date} ${val1.nextDeparture.time}`, 'dd.MM.yyyy HH:mm:ss');
+            const d2 = DateTime
+                    .fromFormat(`${val2.nextDeparture.date} ${val2.nextDeparture.time}`, 'dd.MM.yyyy HH:mm:ss');
+
+            return d1 - d2;
+        });
 
     return updateBuses;
 }
-
-// sendUpdateTime()
 
 
 app.listen(port, () => {
     console.log(`server runner on http::/localhost:` + port);
 })
 
+
 app.get('/next-departure', async (req, res) => {
     try {
-        const updateBuses = await sendUpdateTime();       
+        const updateBuses = await sendUpdateTime();     
+
         res.json(updateBuses);
     } catch (error) {
         res.send(error)
     }    
 })
-
-// console.log('run - ok');
