@@ -35,6 +35,7 @@ const renderTable = (buses) => {
             <td>${bus.startPoint} - ${bus.endPoint}</td>
             <td>${formateDate(dateTimeToUTC)}</td>
             <td>${formateTime(dateTimeToUTC)}</td>            
+            <td>-</td>            
         `;
         tbody.append(row)
 
@@ -49,8 +50,16 @@ const initWebSocket = () => {
     })
 
     ws.addEventListener('message', (e) => {
-        const data = e.data;
-        console.log(data)
+        const data = JSON.parse(e.data);
+        renderTable(data);     
+    })
+
+    ws.addEventListener('error', (error) => {
+       console.log(`WebSocket error: ${error}`);     
+    })
+
+    ws.addEventListener('close', () => {
+       console.log(`WebSocket close connection`);     
     })
 }
 
