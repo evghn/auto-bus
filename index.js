@@ -65,18 +65,6 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
 const createDateFormat = (date, time) => 
     DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss');
 
-
-<<<<<<< HEAD
-const createDateFormat = (date, time) => 
-    DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss');
-
-=======
-
-const createDateFormat = (date, time) => 
-    DateTime.fromFormat(`${date} ${time}`, 'yyyy-MM-dd HH:mm:ss');
-
-
->>>>>>> backend
 // sendUpdateData
 const sendUpdateTime = async () => {
     const buses = await loadBuss();
@@ -91,14 +79,10 @@ const sendUpdateTime = async () => {
                 }
             };
         })
-        .sort((val1, val2) => {
-            const d1 = DateTime
-                    .fromFormat(`${val1.nextDeparture.date} ${val1.nextDeparture.time}`, 'dd.MM.yyyy HH:mm:ss');
-            const d2 = DateTime
-                    .fromFormat(`${val2.nextDeparture.date} ${val2.nextDeparture.time}`, 'dd.MM.yyyy HH:mm:ss');
-
-            return d1 - d2;
-        });
+        .sort((val1, val2) => 
+            createDateFormat(val1.nextDeparture.date, val1.nextDeparture.time)
+            - createDateFormat(val2.nextDeparture.date, val2.nextDeparture.time)
+        );
 
     return updateBuses;
 }
