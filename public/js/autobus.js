@@ -41,9 +41,18 @@ const renderTable = (buses) => {
     });
 }
 
+
+const initWebSocket = () => {
+    const ws = new WebSocket(`ws://${location.host}`);
+    ws.addEventListener('open', () => {
+        console.log('ws open')
+    })
+}
+
 const init = async () => {
     const buses = await fetchBusData();
-    renderTable(buses)
+    renderTable(buses);
+    initWebSocket();
 }
 
 init()
