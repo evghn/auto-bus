@@ -113,8 +113,7 @@ wss.on('connection', (ws) => {
             const newData = await sendUpdateTime();
             ws.send(JSON.stringify(newData));
         } catch (error) {
-            console.log(`error send data to db`);
-            
+            console.log(`error send data from db => ${error}`);            
         }
     }
 
@@ -137,7 +136,7 @@ const server = app.listen(port, () => {
 
 
 server.on('upgrade', (req, socket, head) => {
-    wss.handleUpgrade(req, socket, head, () => {
+    wss.handleUpgrade(req, socket, head, (ws) => {
         wss.emit("connection", ws, req);
     })
 })
