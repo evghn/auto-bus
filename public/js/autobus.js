@@ -47,6 +47,11 @@ const initWebSocket = () => {
     ws.addEventListener('open', () => {
         console.log('ws open')
     })
+
+    ws.addEventListener('message', (e) => {
+        const data = e.data;
+        console.log(data)
+    })
 }
 
 const init = async () => {
