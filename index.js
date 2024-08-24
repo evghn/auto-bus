@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import url from 'node:url';
 import { DateTime } from 'luxon';
-import { log } from 'node:console';
+import {WebSocketServer} from 'ws';
+
 
 const __fileName = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__fileName)
@@ -88,9 +89,7 @@ const sendUpdateTime = async () => {
 }
 
 
-app.listen(port, () => {
-    console.log(`server runner on http::/localhost:` + port);
-})
+
 
 
 app.get('/next-departure', async (req, res) => {
@@ -100,4 +99,45 @@ app.get('/next-departure', async (req, res) => {
     } catch (error) {
         res.send(error)
     }    
+})
+
+
+const wss = new WebSocketServer({noServer: true});
+const clients = new Set();
+
+wss.on('connection', (ws) => {
+    clients.add(ws);
+
+    const sendUpdate = async () => {
+        try {
+            const newData = await sendUpdateTime();
+            ws.send(JSON.stringify(newData));
+        } catch (error) {
+            console.log(`error send data to db`);
+            
+        }
+    }
+
+   const intervalId = setInterval(sendUpdate, 1000);
+
+
+    ws.on('close', () => {
+        clearInterval(intervalId);
+        clients.delete(ws);
+
+    }) 
+})
+
+
+
+
+const server = app.listen(port, () => {
+    console.log(`server runner on http::/localhost:` + port);
+})
+
+
+server.on('upgrade', (req, socket, head) => {
+    wss.handleUpgrade(req, socket, head, () => {
+        wss.emit("connection", ws, req);
+    })
 })
