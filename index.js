@@ -70,7 +70,7 @@ const sendUpdateTime = async () => {
             return {
                 ...bus,
                 nextDeparture: {
-                    date: nextTimeDeparture.toFormat('yyyy.MM.dd'),
+                    date: nextTimeDeparture.toFormat('yyyy-MM-dd'),
                     time: nextTimeDeparture.toFormat('HH:mm:ss'),
                 }
             };
@@ -79,7 +79,7 @@ const sendUpdateTime = async () => {
             const d1 = DateTime
                     .fromFormat(`${val1.nextDeparture.date} ${val1.nextDeparture.time}`, 'yyyy-MM-dd HH:mm:ss');
             const d2 = DateTime
-                    .fromFormat(`${val2.nextDeparture.date} ${val2.nextDeparture.time}`, 'yyyy--MM-dd HH:mm:ss');
+                    .fromFormat(`${val2.nextDeparture.date} ${val2.nextDeparture.time}`, 'yyyy-MM-dd HH:mm:ss');
 
             return d1 - d2;
         });
