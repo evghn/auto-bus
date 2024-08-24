@@ -5,14 +5,15 @@ import url from 'node:url';
 import { DateTime } from 'luxon';
 import { log } from 'node:console';
 
-
-const port = 3000;
-const app = express();
 const __fileName = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__fileName)
 const fileName = path.join(__dirname, 'db/buses.json');
 const timeZone = "UTC";
 
+
+const port = 3000;
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 const loadBuss = async () => {
@@ -69,16 +70,16 @@ const sendUpdateTime = async () => {
             return {
                 ...bus,
                 nextDeparture: {
-                    date: nextTimeDeparture.toFormat('dd.MM.yyyy'),
+                    date: nextTimeDeparture.toFormat('yyyy.MM.dd'),
                     time: nextTimeDeparture.toFormat('HH:mm:ss'),
                 }
             };
         })
         .sort((val1, val2) => {
             const d1 = DateTime
-                    .fromFormat(`${val1.nextDeparture.date} ${val1.nextDeparture.time}`, 'dd.MM.yyyy HH:mm:ss');
+                    .fromFormat(`${val1.nextDeparture.date} ${val1.nextDeparture.time}`, 'yyyy-MM-dd HH:mm:ss');
             const d2 = DateTime
-                    .fromFormat(`${val2.nextDeparture.date} ${val2.nextDeparture.time}`, 'dd.MM.yyyy HH:mm:ss');
+                    .fromFormat(`${val2.nextDeparture.date} ${val2.nextDeparture.time}`, 'yyyy--MM-dd HH:mm:ss');
 
             return d1 - d2;
         });
