@@ -2,7 +2,7 @@ import express from 'express';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import url from 'node:url';
-import { DateTime } from 'luxon';
+import { DateTime, Duration } from 'luxon';
 import {WebSocketServer} from 'ws';
 
 
@@ -13,7 +13,6 @@ const __fileName = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__fileName)
 const fileName = path.join(__dirname, 'db/buses.json');
 const timeZone = "UTC";
-
 
 
 const loadBuss = async () => {
@@ -69,14 +68,20 @@ const createDateFormat = (date, time) =>
 // sendUpdateData
 const sendUpdateTime = async () => {
     const buses = await loadBuss();
+    const now = DateTime.now().setZone(timeZone);
     const updateBuses = buses
         .map(bus => {
-            const nextTimeDeparture = calcNextTime(bus.firstDepartureTime,bus.frequencyMinutes);        
+            const nextTimeDeparture = calcNextTime(bus.firstDepartureTime,bus.frequencyMinutes);
+            const timeRemainig = Duration
+                .fromMillis(
+                    nextTimeDeparture.diff(now).toMillis()
+                );        
             return {
                 ...bus,
                 nextDeparture: {
                     date: nextTimeDeparture.toFormat('yyyy-MM-dd'),
                     time: nextTimeDeparture.toFormat('HH:mm:ss'),
+                    remainig: timeRemainig.toFormat('hh:mm:ss')
                 }
             };
         })
@@ -87,9 +92,6 @@ const sendUpdateTime = async () => {
 
     return updateBuses;
 }
-
-
-
 
 
 app.get('/next-departure', async (req, res) => {
@@ -113,22 +115,17 @@ wss.on('connection', (ws) => {
             const newData = await sendUpdateTime();
             ws.send(JSON.stringify(newData));
         } catch (error) {
-            console.log(`error send data to db`);
-            
+            console.log(`error send data from db ${error}`);            
         }
     }
 
    const intervalId = setInterval(sendUpdate, 1000);
 
-
     ws.on('close', () => {
         clearInterval(intervalId);
         clients.delete(ws);
-
     }) 
 })
-
-
 
 
 const server = app.listen(port, () => {
@@ -137,7 +134,7 @@ const server = app.listen(port, () => {
 
 
 server.on('upgrade', (req, socket, head) => {
-    wss.handleUpgrade(req, socket, head, () => {
+    wss.handleUpgrade(req, socket, head, (ws) => {
         wss.emit("connection", ws, req);
     })
 })
