@@ -5,15 +5,15 @@ import url from 'node:url';
 import { DateTime, Duration } from 'luxon';
 import {WebSocketServer} from 'ws';
 
-const port = 3000;
-const app = express();
-app.use(express.static(path.join(__dirname, 'public')));
+
 
 const __fileName = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__fileName)
 const fileName = path.join(__dirname, 'db/buses.json');
 const timeZone = "UTC";
-
+const port = 3000;
+const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
 
 const loadBuss = async () => {
     const data = await readFile(fileName, 'utf-8');
