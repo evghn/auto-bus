@@ -25,7 +25,7 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
     const [hours, minutes] = firstDepartureTime.split(':').map(Number);
     let departure = DateTime
         .now()
-        .set({hours, minutes, seconds: 0, millisecond: 0})
+        .set({hours, minutes, second: 0, millisecond: 0})
         .setZone(timeZone);
     
     if (now > departure) {
@@ -34,14 +34,14 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
 
     const endOfDay = DateTime
         .now()
-        .set({hours: 23, minutes: 59, seconds: 59, millisecond: 0})
+        .set({hour: 23, minute: 59, second: 59, millisecond: 0})
         .setZone(timeZone);
 
     if (departure > endOfDay) {
         departure = departure
             .startOf('day')
             .plus({days: 1})
-            .set({hours, minutes, seconds: 0, millisecond: 0});
+            .set({hour, minute, second: 0, millisecond: 0});
     }
 
     while (now > departure) {
@@ -50,7 +50,7 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
             departure = departure
                 .startOf('day')
                 .plus({days: 1})
-                .set({hours, minutes, seconds: 0, millisecond: 0});
+                .set({hour, minute, second: 0, millisecond: 0});
         }
     }
 
@@ -77,7 +77,7 @@ const sendUpdateTime = async () => {
                 nextDeparture: {
                     date: nextTimeDeparture.toFormat('yyyy-MM-dd'),
                     time: nextTimeDeparture.toFormat('HH:mm:ss'),
-                    remainig: timeRemainig.toFormat('hh:mm:ss')
+                    remaining: timeRemainig.toFormat('hh:mm:ss')
                 }
             };
         })
