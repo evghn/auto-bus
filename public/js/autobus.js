@@ -55,7 +55,7 @@ const renderTable = (buses) => {
 
 
 const initWebSocket = () => {
-    const ws = new WebSocket(`ws://${location.host}`);
+    const ws = new WebSocket(`wss://${location.host}`);
     ws.addEventListener('open', () => {})
 
     ws.addEventListener('message', (e) => {

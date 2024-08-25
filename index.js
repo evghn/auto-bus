@@ -130,7 +130,7 @@ wss.on('connection', (ws) => {
 
 
 const server = app.listen(port, () => {
-    console.log(`server runner on http::/localhost:` + port);
+    console.log(`server runner on http://localhost:` + port);
 })
 
 
