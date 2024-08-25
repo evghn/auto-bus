@@ -46,7 +46,7 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
         departure = departure
             .startOf('day')
             .plus({days: 1})
-            .set({hour, minute, second: 0, millisecond: 0});
+            .set({hours, minutes, second: 0, millisecond: 0});
     }
 
     while (now > departure) {
@@ -55,7 +55,7 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
             departure = departure
                 .startOf('day')
                 .plus({days: 1})
-                .set({hour, minute, second: 0, millisecond: 0});
+                .set({hours, minutes, second: 0, millisecond: 0});
         }
     }
 
