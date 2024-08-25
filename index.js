@@ -2,8 +2,9 @@ import express from 'express';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import url from 'node:url';
-import { DateTime } from 'luxon';
-import { log } from 'node:console';
+import { DateTime, Duration } from 'luxon';
+import {WebSocketServer} from 'ws';
+
 
 const __fileName = url.fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__fileName)
@@ -29,7 +30,7 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
     const [hours, minutes] = firstDepartureTime.split(':').map(Number);
     let departure = DateTime
         .now()
-        .set({hours, minutes, seconds: 0, millisecond: 0})
+        .set({hours, minutes, second: 0, millisecond: 0})
         .setZone(timeZone);
     
     if (now > departure) {
@@ -38,14 +39,14 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
 
     const endOfDay = DateTime
         .now()
-        .set({hours: 23, minutes: 59, seconds: 59, millisecond: 0})
+        .set({hour: 23, minute: 59, second: 59, millisecond: 0})
         .setZone(timeZone);
 
     if (departure > endOfDay) {
         departure = departure
             .startOf('day')
             .plus({days: 1})
-            .set({hours, minutes, seconds: 0, millisecond: 0});
+            .set({hour, minute, second: 0, millisecond: 0});
     }
 
     while (now > departure) {
@@ -54,7 +55,7 @@ const calcNextTime = (firstDepartureTime,frequencyMinutes) => {
             departure = departure
                 .startOf('day')
                 .plus({days: 1})
-                .set({hours, minutes, seconds: 0, millisecond: 0});
+                .set({hour, minute, second: 0, millisecond: 0});
         }
     }
 
@@ -68,14 +69,20 @@ const createDateFormat = (date, time) =>
 // sendUpdateData
 const sendUpdateTime = async () => {
     const buses = await loadBuss();
+    const now = DateTime.now().setZone(timeZone);
     const updateBuses = buses
         .map(bus => {
-            const nextTimeDeparture = calcNextTime(bus.firstDepartureTime,bus.frequencyMinutes);        
+            const nextTimeDeparture = calcNextTime(bus.firstDepartureTime,bus.frequencyMinutes);
+            const timeRemainig = Duration
+                .fromMillis(
+                    nextTimeDeparture.diff(now).toMillis()
+                );        
             return {
                 ...bus,
                 nextDeparture: {
                     date: nextTimeDeparture.toFormat('yyyy-MM-dd'),
                     time: nextTimeDeparture.toFormat('HH:mm:ss'),
+                    remaining: timeRemainig.toFormat('hh:mm:ss')
                 }
             };
         })
@@ -88,11 +95,6 @@ const sendUpdateTime = async () => {
 }
 
 
-app.listen(port, () => {
-    console.log(`server runner on http::/localhost:` + port);
-})
-
-
 app.get('/next-departure', async (req, res) => {
     try {
         const updateBuses = await sendUpdateTime();
@@ -100,4 +102,40 @@ app.get('/next-departure', async (req, res) => {
     } catch (error) {
         res.send(error)
     }    
+})
+
+
+const wss = new WebSocketServer({noServer: true});
+const clients = new Set();
+
+wss.on('connection', (ws) => {
+    clients.add(ws);
+
+    const sendUpdate = async () => {
+        try {
+            const newData = await sendUpdateTime();
+            ws.send(JSON.stringify(newData));
+        } catch (error) {
+            console.log(`error send data from db ${error}`);            
+        }
+    }
+
+   const intervalId = setInterval(sendUpdate, 1000);
+
+    ws.on('close', () => {
+        clearInterval(intervalId);
+        clients.delete(ws);
+    }) 
+})
+
+
+const server = app.listen(port, () => {
+    console.log(`server runner on http::/localhost:` + port);
+})
+
+
+server.on('upgrade', (req, socket, head) => {
+    wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit("connection", ws, req);
+    })
 })
